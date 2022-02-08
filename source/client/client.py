@@ -4,7 +4,9 @@ import sys
 import pickle
 import socket
 import traceback
+
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
+from Cryptodome.Signature import pkcs1_15 
 from Cryptodome.Util.Padding import pad, unpad
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import SHA256
@@ -24,8 +26,8 @@ PORT = 2121
 
 BLOCK_SIZE = 32 # AES data block size, 256 bits (32 bytes)
 key_size = 32   # AES key size, 32 bytes -> 256 bits
-SERVER_PUB_KEY = "depolyment\server_public.pem" # Server Public Key
-CAMERA_PRIV_KEY = "depolyment\camera_private.pem"   # Camera Private Key
+SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
+CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
 
 
 # A data class to store a encrypted file content.
@@ -128,8 +130,7 @@ def process_input(server_response):
     '''
     if server_response == "received":
         print("[RECEIVED] File Received by Server\n")
-    if server_response == "quit":
-        pass
+
 
 
 def get_picture() -> bytes:
@@ -149,21 +150,22 @@ def get_picture() -> bytes:
 
 # The keys are RSA 2048 bit keys.
 # Use this certifcate to send client.py, the public key
-def get_key(public_key, private_key):
+def get_key(public_key_filepath: str, private_key_filepath: str):
     '''
-    This function is used to get the private/public key.
+    This function is used to get the private/public key content.
+    So, you would need to convert the key content into a RSA key object.
     
     Args:
-        ``public_key`` (str) : The public key file name.
-        ``private_key`` (str) : The private key file name.
+        ``public_key_filepath`` (str) : The public key file name.
+        ``private_key_filepath`` (str) : The private key file name.
 
     Returns:
-        bytes : both the public and private key as bytes.
+        ``public_key``, ``private_key`` (str) : both the public and private key content as str.
     '''
-    with open(public_key, 'r') as f:
+    with open(public_key_filepath, 'r') as f:
         public_key = f.read()
     
-    with open(private_key, 'r') as f:
+    with open(private_key_filepath, 'r') as f:
         private_key = f.read()
 
     return public_key, private_key
@@ -185,12 +187,12 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
     # can use either PKCS1_V1_5 or PKCS1_OAEP cipher (different in padding scheme)
     # recommend to use PKCS1_OAEP instead of PKCS1_V1_5 to avoid chosen_cipher_text_attack
 
-    # Import the public key into RSA.
+    # Imports the server's public key into RSA.
     server_pub_key = RSA.import_key(server_public_key_content)
     print("Done importing server public key")
     print(f"Server public key:\n{server_public_key_content}")
     
-
+    # Imports the camera's private key into RSA.
     camera_priv_key = RSA.import_key(camera_private_key_content)
     print("Done importing camera private key")
     print(f"Camera private key:\n{camera_private_key_content}")
@@ -214,17 +216,25 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
 
     # Use AES.MODE_CBC as its more secure than AES.MODE_ECB at scrambling bytes in images
     aes_cipher = AES.new(aes_key, AES.MODE_CBC)
+    
     # Encrypt the picture using the AES key
     # Encrypted image is now ready to be sent to the server. 
     AES_encrypted_image = aes_cipher.encrypt(pad(picture, BLOCK_SIZE))
     
     # Commented out as output is cluttered
 
-    # # Show the encypted image in bytes
-    # print("\nEncrypted picture: \n", end="")
-    # for byte in AES_encrypted_image:
-    #     print(f"{byte:02x}", end="")
+    # Show the encypted image in bytes
+    print("\nEncrypted picture: \n", end="")
+    enc_image_str = ""
+    for byte in AES_encrypted_image:
+        enc_image_str += f"{byte:02x}"
+    
+    # Prettify the encrypted image by printing it in lines of 16 bytes
+    chars_per_line = 64
+    for i in range(0, len(enc_image_str), chars_per_line):
+        print(enc_image_str[i:i+chars_per_line])
 
+    # Creates a object to store encrypted session key, IV, encrypted image and RSA signature. 
     encrypted_payload = ENC_payload()
     encrypted_payload.encrypted_session_key = rsa_cipher.encrypt(aes_key)
     encrypted_payload.aes_iv = aes_cipher.iv
@@ -233,13 +243,13 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
     return encrypted_payload
 
 # Hash and signs the picture using SHA256 and RSA private key
-def sign_picture(picture: bytes, RSA_private_key):
+def sign_picture(picture: bytes, camera_private_key):
     '''
     This function is used to sign the picture using RSA.
     
     Args:
         ``picture`` (bytes) : the picture to be signed
-        ``RSA_private_key`` (RsaKey) : the private key of the camera
+        ``camera_private_key`` (RsaKey) : the private key of the camera
     
     Returns:
         ``signature`` (bytes) : the signature of the picture in bytes
@@ -253,19 +263,19 @@ def sign_picture(picture: bytes, RSA_private_key):
         print(f"{bytes:02x}", end="")
 
     # Encrypts the digest using the private key
-    PKCS1_signer = PKCS1_OAEP.new(RSA_private_key)
-    signature = PKCS1_signer.encrypt(digest)
+    signer = pkcs1_15.new(camera_private_key)
+    signature = signer.encrypt(digest)
 
     # Prints the signature. signature is a byte array
     print("\n\nSignature:")
-    string = ""
+    signature_str = ""
     for bytes in signature:
-        string += f"{bytes:02x}"
+        signature_str += f"{bytes:02x}"
     
     # Prettify the signature
     chars_per_line = 64
-    for i in range(0, len(string), chars_per_line):
-        print(string[i:i+chars_per_line])
+    for i in range(0, len(signature_str), chars_per_line):
+        print(signature_str[i:i+chars_per_line])
 
     return signature
 
@@ -273,8 +283,9 @@ def main():
     """
     This function is used to send the picture to the server.
     """
+    empty = ""
     # Gets the necessary keys from the files
-    server_public_key, camera_private_key = get_key(SERVER_PUB_KEY, CAMERA_PRIV_KEY)
+    server_public_key, camera_private_key = get_key(SERVER_PUB_KEY_PATH, CAMERA_PRIV_KEY_PATH)
 
     while True:
         try:  
@@ -292,12 +303,8 @@ def main():
 
                 server_process({"type": "upload_file", "file_name": f_name, "file_content": payload})
 
-                empty = ""
                 print("Uploaded file: " + f_name)
                 print(f"{empty:-^80}\n\n")
-
-                # if connect_server_send(f_name , payload): 
-                #     print(f_name , " sent" )
 
         except KeyboardInterrupt:  
             exit()  # gracefully exit if control-C detected
