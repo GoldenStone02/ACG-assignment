@@ -1,7 +1,6 @@
-import base64, time, datetime, ftplib, io, random
+import base64, time, datetime, random
 
 import sys
-import json
 import pickle
 import socket
 import traceback
@@ -51,30 +50,6 @@ class ENC_payload:
         self.rsa_signature=""
 
 # TODO: Create a server client socket program.
-def connect_server_send(file_name: str , file_data: bytes) -> bool:
-    """
-    This function send file_data using FTP and save it as file_name in the remote server. 
-    It will simulate intermittent transfer. 
-    
-    Args:
-        ``file_name`` (str) : file_name of file save in server as a String
-        ``file_data`` (bytes) : content of file as byte array
-    
-    Returns:
-        bool : True if send, False otherwise
-    """
-    try:
-        if random.randrange(1,10) > 8: raise Exception("Generated Random Network Error")   # create random failed transfer   
-        ftp = ftplib.FTP()  # use init will use port 21 , hence use connect()
-        ftp.connect( server_name , 2121) # use high port 2121 instead of 21
-        ftp.login()  # ftp.login(user="anonymous", passwd = 'anonymous@')
-        ftp.storbinary('STOR ' + file_name, io.BytesIO( file_data ) )
-        ftp.quit()
-        return True
-    except Exception as e:
-        print(e, "while sending", file_name )
-        return False
-
 # Steps to receive and process the server's response
 def server_process(packet_input: dict) -> any:
     '''
@@ -83,16 +58,12 @@ def server_process(packet_input: dict) -> any:
 
     Args:
         ``packet_input`` (dict) : Packet to be sent to server.
-    
-    Returns:
-        ``processed_input`` (any) : Outputs the processed socket server's response
     '''
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
     connect_to_server(client)
     server_response = send_to_server(packet_input, client)
     exit_server(client)
-    processed_input = process_input(server_response)
-    return processed_input
+    process_input(server_response)
 
 def connect_to_server(client):
     '''
@@ -112,6 +83,7 @@ def connect_to_server(client):
 def send_to_server(packet: dict, client) -> dict:
     '''
     This function sends a packet to socket server.
+    And will received the server response and return it.
 
     Args:
         ``packet`` (dict) : Packet to be sent to server.
@@ -123,12 +95,13 @@ def send_to_server(packet: dict, client) -> dict:
     connected = True
     while connected:
         if len(packet) > 0:
-            client.sendall(json.dumps(packet).encode("utf8"))
+            client.sendall(pickle.dumps(packet))
         else:
             print("Message can't be empty")
             continue    # Skips the bottom commands
         connected = False
-        received_message = json.loads(client.recv(5120))
+        received_message = pickle.loads(client.recv(5120))
+        print(received_message)
         # print(f"[PROCESS] {HOST}:{PORT}, Packet type: {received_message['type']}")
         return received_message
 
@@ -141,25 +114,22 @@ def exit_server(client):
         ``client`` (obj) : Client socket object.
     '''
     quit_connection = {"type":"quit"}
-    client.sendall(json.dumps(quit_connection).encode("utf8"))
-    # print(f"[EXITED] Connection to {HOST}:{PORT} Exited")
+    client.sendall(pickle.dumps(quit_connection))
+    print(f"[EXITED] Connection to {HOST}:{PORT} Exited")
 
 # Processes the server_response 
-def process_input(server_response: dict) -> any:
+def process_input(server_response):
     '''
-    This function processes the server's response and returns the data segment of the packet.
+    This function processes the server's response, and return the status of the file.
 
     Args:
         ``server_response`` (dict) : Server's response to client .
     
-    Returns:
-        ``output`` (any) : Outputs the data segment of the packet.
     '''
-    output = None
-    server_response
-
-    return output
-
+    if server_response == "received":
+        print("[RECEIVED] File Received by Server\n")
+    if server_response == "quit":
+        pass
 
 
 def get_picture() -> bytes:
@@ -232,7 +202,7 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
     rsa_cipher = PKCS1_OAEP.new(server_pub_key)
 
     # Generates a random AES key
-    print(f"\nGenerating a {key_size*8}-bit AES key")
+    print(f"\nGenerating a {key_size*8}-bit AES key..")
     aes_key = get_random_bytes(key_size)
     print("AES block size: ", key_size)
     print("AES key: \n", end="")
@@ -313,15 +283,18 @@ def main():
                 time.sleep(10) # Sleep for 10 sec if there is no image
                 print( "Random no motion detected")
             else:
+                print(f"Processes\n{empty:-^80}\n")
                 # Encrypts the picture
-                encrypted_image = encrypt_picture(my_image, server_public_key, camera_private_key)
-                payload = pickle.dumps(encrypted_image)
+                payload = encrypt_picture(my_image, server_public_key, camera_private_key)
 
                 # Prepares the payload to be sent to the server
                 f_name = str(camera_id) + "_" +  datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S.jpg" )
 
-                if server_process({"type": "upload_file", "file_name": f_name, "file_content": payload}):
-                    print("Uploaded file: " + f_name)
+                server_process({"type": "upload_file", "file_name": f_name, "file_content": payload})
+
+                empty = ""
+                print("Uploaded file: " + f_name)
+                print(f"{empty:-^80}\n\n")
 
                 # if connect_server_send(f_name , payload): 
                 #     print(f_name , " sent" )
