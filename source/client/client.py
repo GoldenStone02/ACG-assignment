@@ -1,4 +1,4 @@
-import base64, time, datetime, ftplib, io, random
+import base64, time, datetime, random
 
 import sys
 import pickle
@@ -48,31 +48,6 @@ class ENC_payload:
         self.aes_iv = ""
         self.encrypted_content=""
         self.rsa_signature=""
-
-# NOTE: We will be using server client socket so pyftpdlib will not be needed in this case
-# def connect_server_send(file_name: str , file_data: bytes) -> bool:
-#     """
-#     This function send file_data using FTP and save it as file_name in the remote server. 
-#     It will simulate intermittent transfer. 
-    
-#     Args:
-#         ``file_name`` (str) : file_name of file save in server as a String
-#         ``file_data`` (bytes) : content of file as byte array
-    
-#     Returns:
-#         bool : True if send, False otherwise
-#     """
-#     try:
-#         if random.randrange(1,10) > 8: raise Exception("Generated Random Network Error")   # create random failed transfer   
-#         ftp = ftplib.FTP()  # use init will use port 21 , hence use connect()
-#         ftp.connect( server_name , 2121) # use high port 2121 instead of 21
-#         ftp.login()  # ftp.login(user="anonymous", passwd = 'anonymous@')
-#         ftp.storbinary('STOR ' + file_name, io.BytesIO( file_data ) )
-#         ftp.quit()
-#         return True
-#     except Exception as e:
-#         print(e, "while sending", file_name )
-#         return False
 
 # TODO: Create a server client socket program.
 # Steps to receive and process the server's response

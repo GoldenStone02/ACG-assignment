@@ -5,9 +5,6 @@ import pickle
 import traceback
 from threading import Thread
 
-from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers import FTPHandler
-from pyftpdlib.servers import FTPServer
 
 HOST = "127.0.0.1"
 PORT = 2121
