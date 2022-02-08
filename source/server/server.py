@@ -1,6 +1,5 @@
 # need to pip install pytftpdlib
 import sys
-import json
 import socket
 import pickle
 import traceback
@@ -18,12 +17,13 @@ key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PRIV_KEY = "depolyment\server_private.pem" # Server Private Key
 CAMERA_PUB_KEY = "depolyment\camera_public.pem"   # Camera Public Key
 
-authorizer = DummyAuthorizer() # handle permission and user
-authorizer.add_anonymous("./data/" , perm='adfmwM')
-handler = FTPHandler #  understand FTP protocol
-handler.authorizer = authorizer
-server = FTPServer((HOST, PORT), handler) # bind to high port, port 21 need root permission
-server.serve_forever()
+# NOTE: We will be using socket server client so pyftpdlib will not be necessary
+# authorizer = DummyAuthorizer() # handle permission and user
+# authorizer.add_anonymous("source\server\data" , perm='adfmwM')
+# handler = FTPHandler #  understand FTP protocol
+# handler.authorizer = authorizer
+# server = FTPServer((HOST, PORT), handler) # bind to high port, port 21 need root permission
+# server.serve_forever()
 
 # A data class to store a encrypted file content.
 class ENC_payload:
@@ -51,6 +51,13 @@ class ENC_payload:
 # TODO: Clean up the socket server code.
 # Starts the server
 def start_server(host, port):
+    '''
+    This function starts the socket server.
+
+    Args:
+        ``host`` : The host IP address.
+        ``port`` : The port number.
+    '''
     print("[STARTING] Server is starting...")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -76,6 +83,15 @@ def start_server(host, port):
 
 # Handler for client machine
 def client_thread(connection, ip, port, max_buffer_size = 5120):
+    '''
+    This function is used to handle the client request.
+
+    Args:
+        ``connection`` : The connection object.
+        ``ip`` : The client IP address.
+        ``port`` : The client port number.
+        ``max_buffer_size`` : The maximum buffer size.
+    '''
     is_active = True
     while is_active:
         client_input = receive_input(connection, max_buffer_size)
@@ -86,28 +102,46 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
             is_active = False
         else:
             # Send the message after dumping it and encoding it.
-            connection.sendall(json.dumps(client_input).encode("utf8"))  
-            print(f"[PROCESS] {ip}:{port}. Sent to Client, Packet type: '{client_input['type']}'")
+            connection.sendall(pickle.dumps(client_input))  
+            print(f"[PROCESS] {ip}:{port}. Sent to Client, Packet type: '{client_input}'")
 
 # Receives input from client machine
 def receive_input(connection, max_buffer_size):
+    '''
+    This function is used to receive the input from the client.
+
+    Args:
+        ``connection`` : The connection object.
+        ``max_buffer_size`` : The maximum buffer size.
+
+    Returns:
+        ``output`` : The processed server response.
+    '''
     client_input = connection.recv(max_buffer_size)
-    decoded_input = client_input.decode("utf8")
-    result = process_input(decoded_input)
-    return result
+    decoded_input = pickle.loads(client_input)
+    print(decoded_input)
+    output = process_input(decoded_input)
+    return output
 
 # Processes the input from the client
 def process_input(client_request):
     '''
     This function receives the input string from the client
     and validate the input and return the string to the client
+
+    Args:
+        ``client_request`` : The client request.
+
+    Returns:
+        ``output`` : The processed server response.
     '''
     selection = client_request['type']
     if selection == "quit":
         output = "quit"
     if selection == "upload_file":
         client_request["file_name"]
-        client_request["file_content"]
+        decrypted_picture = client_request["file_content"]
+        output = "received"
     if selection == "2":
         pass
     return output
@@ -135,6 +169,16 @@ def decrypt_picture():
     pass
 
 def verify_signature():
+    pass
+
+def upload_file(file_name, file_content):
+    '''
+    This function upload the file to the database.
+
+    Args:
+        ``file_name`` : The file name.
+        ``file_content`` : The file content.
+    '''
     pass
 
 if __name__ == "__main__":
