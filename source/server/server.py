@@ -18,6 +18,51 @@ key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PRIV_KEY_PATH = "depolyment\server_private.pem" # Server Private Key
 CAMERA_PUB_KEY_PATH = "depolyment\camera_public.pem"   # Camera Public Key
 
+
+# Python program to print
+# colored text and background
+class colors:
+    '''
+    Colors class:reset all colors with colors.reset; two
+    sub classes fg for foreground
+    and bg for background; use as colors.subclass.colorname.
+    i.e. colors.fg.red or colors.bg.greenalso, the generic bold, disable,
+    underline, reverse, strike through,
+    and invisible work with the main class i.e. colors.bold
+    '''
+    reset='\033[0m'
+    bold='\033[01m'
+    disable='\033[02m'
+    underline='\033[04m'
+    reverse='\033[07m'
+    strikethrough='\033[09m'
+    invisible='\033[08m'
+    class fg:
+        black='\033[30m'
+        red='\033[31m'
+        green='\033[32m'
+        orange='\033[33m'
+        blue='\033[34m'
+        purple='\033[35m'
+        cyan='\033[36m'
+        lightgrey='\033[37m'
+        darkgrey='\033[90m'
+        lightred='\033[91m'
+        lightgreen='\033[92m'
+        yellow='\033[93m'
+        lightblue='\033[94m'
+        pink='\033[95m'
+        lightcyan='\033[96m'
+    class bg:
+        black='\033[40m'
+        red='\033[41m'
+        green='\033[42m'
+        orange='\033[43m'
+        blue='\033[44m'
+        purple='\033[45m'
+        cyan='\033[46m'
+        lightgrey='\033[47m'
+ 
 # A data class to store a encrypted file content.
 class ENC_payload:
     '''
@@ -39,7 +84,6 @@ class ENC_payload:
         self.encrypted_content=""
         self.rsa_signature=""
 
-
 # Starts the server
 def start_server(host, port):
     '''
@@ -49,7 +93,7 @@ def start_server(host, port):
         ``host`` : The host IP address.
         ``port`` : The port number.
     '''
-    print("[STARTING] Server is starting...")
+    print(colors.fg.green, "[STARTING] ", colors.fg.lightgrey, "Server is starting...")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
@@ -58,12 +102,12 @@ def start_server(host, port):
         print("Bind failed. Error : " + str(sys.exc_info()))
         sys.exit()
     server.listen(20) # listening up to 20 different clients
-    print("[LISTENING] Socket now listening")
+    print(colors.fg.orange, "[LISTENING] ", colors.fg.lightgrey,"Socket now listening")
     # infinite loop- do not reset for every requests
     while True:
         connection, address = server.accept()   # Server would wait here until a new connection is received
         ip, port = str(address[0]), str(address[1])
-        print(f"[NEW CONNECTION] Connected with {ip}:{port}")
+        print(colors.fg.green,"[NEW CONNECTION] ", colors.fg.lightgrey, f"Connected with {ip}:{port}")
         try:
             # Server attempts to start a thread with target function "clientThread()"
             thread = Thread(target=client_thread, args=(connection, ip, port))
@@ -89,12 +133,12 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
         if client_input == "quit":
             # Closes the connection of current thread
             connection.close()
-            print(f"[CLOSED] Connection with {ip}:{port} closed")
+            print(colors.fg.red, "[CLOSED] ", colors.fg.lightgrey, f"Connection with {ip}:{port} closed")
             is_active = False
         else:
             # Send the message after dumping it and encoding it.
             connection.sendall(pickle.dumps(client_input))  
-            print(f"[PROCESS] {ip}:{port}. Sent to Client, Packet type: '{client_input}'")
+            print(colors.fg.yellow, "[PROCESS] ", colors.fg.lightgrey, f"{ip}:{port}. Sent to Client, Packet type: '{client_input}'")
 
 # Receives input from client machine
 def receive_input(connection, max_buffer_size):
@@ -145,9 +189,7 @@ def process_input(client_request):
             # This means that the signature is not valid
             # TODO: Haven't implemented anything to tell the client that the signature is not valid
             output = "invalid"
-
     return output
-
 
 # TODO: Use this certifcate to send client.py, the public key
 # The keys are RSA 2048 bit keys.

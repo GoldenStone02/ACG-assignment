@@ -29,7 +29,50 @@ key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
 CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
 
-
+# Python program to print
+# colored text and background
+class colors:
+    '''
+    Colors class:reset all colors with colors.reset; two
+    sub classes fg for foreground
+    and bg for background; use as colors.subclass.colorname.
+    i.e. colors.fg.red or colors.bg.greenalso, the generic bold, disable,
+    underline, reverse, strike through,
+    and invisible work with the main class i.e. colors.bold
+    '''
+    reset='\033[0m'
+    bold='\033[01m'
+    disable='\033[02m'
+    underline='\033[04m'
+    reverse='\033[07m'
+    strikethrough='\033[09m'
+    invisible='\033[08m'
+    class fg:
+        black='\033[30m'
+        red='\033[31m'
+        green='\033[32m'
+        orange='\033[33m'
+        blue='\033[34m'
+        purple='\033[35m'
+        cyan='\033[36m'
+        lightgrey='\033[37m'
+        darkgrey='\033[90m'
+        lightred='\033[91m'
+        lightgreen='\033[92m'
+        yellow='\033[93m'
+        lightblue='\033[94m'
+        pink='\033[95m'
+        lightcyan='\033[96m'
+    class bg:
+        black='\033[40m'
+        red='\033[41m'
+        green='\033[42m'
+        orange='\033[43m'
+        blue='\033[44m'
+        purple='\033[45m'
+        cyan='\033[46m'
+        lightgrey='\033[47m'
+ 
 # A data class to store a encrypted file content.
 class ENC_payload:
     '''
@@ -80,7 +123,7 @@ def connect_to_server(client):
         print("Connection Error")
         print(traceback.format_exc())
         sys.exit()
-    print(f"[CONNECTION ESTABLISHED] Connected to {HOST}:{PORT}")
+    print(colors.fg.green, "[CONNECTION ESTABLISHED] ", colors.fg.lightgrey, "Connected to {HOST}:{PORT}")
 
 def send_to_server(packet: dict, client) -> dict:
     '''
@@ -224,7 +267,7 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
     # Commented out as output is cluttered
 
     # Show the encypted image in bytes
-    print("\nEncrypted picture: \n", end="")
+    print("\n\nEncrypted picture: \n", end="")
     enc_image_str = ""
     for byte in AES_encrypted_image:
         enc_image_str += f"{byte:02x}"
@@ -236,9 +279,11 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
 
     # Creates a object to store encrypted session key, IV, encrypted image and RSA signature. 
     encrypted_payload = ENC_payload()
+    # Encrypts the aes_key with the server's public key
     encrypted_payload.encrypted_session_key = rsa_cipher.encrypt(aes_key)
     encrypted_payload.aes_iv = aes_cipher.iv
     encrypted_payload.encrypted_content = AES_encrypted_image
+    # Hashes the image and signs that hashed image with the camera's private key
     encrypted_payload.rsa_signature = sign_picture(picture, camera_priv_key)
     return encrypted_payload
 
@@ -255,16 +300,17 @@ def sign_picture(picture: bytes, camera_private_key):
         ``signature`` (bytes) : the signature of the picture in bytes
     '''
     # Hashes the picture using SHA256
-    digest = (SHA256.new(picture).digest())
+    # Creates a SHA256 object
+    digest = SHA256.new(picture)
 
     # Prints picture digest. digest is a byte array
     print("\n\nImage Digest:")
-    for bytes in digest:
+    for bytes in digest.digest():
         print(f"{bytes:02x}", end="")
 
     # Encrypts the digest using the private key
     signer = pkcs1_15.new(camera_private_key)
-    signature = signer.encrypt(digest)
+    signature = signer.sign(digest)
 
     # Prints the signature. signature is a byte array
     print("\n\nSignature:")
