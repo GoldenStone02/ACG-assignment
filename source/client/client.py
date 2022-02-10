@@ -12,6 +12,35 @@ from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import SHA256
 from Cryptodome.Random import get_random_bytes
 
+
+def validationRange(start,end,question) -> int: 
+    '''
+    This function checks for user input and only accepts if user input is within the range specified
+
+    Args:
+            ``start`` : Starting number
+            ``end`` : Ending number
+            ``question``: Question asked
+
+    Returns: 
+            ``checkInput`` : a valid integer number between the range specified in the argument
+
+    '''
+    while True:
+        try:
+            checkInput = int(input(question))
+            if checkInput < start or checkInput > end:
+                raise OverflowError
+            else:
+                return checkInput
+        except OverflowError:   # for out of range
+            print('\33[41m' +f'Out of range! Please enter an integer number between {start} and {end}'+ '\33[0m' +'\n')
+        
+        except ValueError:      # for not int number input 
+            print('\33[41m'+ f'Invalid, not int. Please enter an integer number between {start} and {end}'+'\33[0m' + '\n')
+
+
+
 # These variables are to support the mock camera
 my_pict = "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"
 
@@ -30,6 +59,50 @@ SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
 CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
 
 
+# Python program to print
+# colored text and background
+class colors:
+    '''
+    Colors class:reset all colors with colors.reset; two
+    sub classes fg for foreground
+    and bg for background; use as colors.subclass.colorname.
+    i.e. colors.fg.red or colors.bg.greenalso, the generic bold, disable,
+    underline, reverse, strike through,
+    and invisible work with the main class i.e. colors.bold
+    '''
+    reset='\033[0m'
+    bold='\033[01m'
+    disable='\033[02m'
+    underline='\033[04m'
+    reverse='\033[07m'
+    strikethrough='\033[09m'
+    invisible='\033[08m'
+    class fg:
+        black='\033[30m'
+        red='\033[31m'
+        green='\033[32m'
+        orange='\033[33m'
+        blue='\033[34m'
+        purple='\033[35m'
+        cyan='\033[36m'
+        lightgrey='\033[37m'
+        darkgrey='\033[90m'
+        lightred='\033[91m'
+        lightgreen='\033[92m'
+        yellow='\033[93m'
+        lightblue='\033[94m'
+        pink='\033[95m'
+        lightcyan='\033[96m'
+    class bg:
+        black='\033[40m'
+        red='\033[41m'
+        green='\033[42m'
+        orange='\033[43m'
+        blue='\033[44m'
+        purple='\033[45m'
+        cyan='\033[46m'
+        lightgrey='\033[47m'
+ 
 # A data class to store a encrypted file content.
 class ENC_payload:
     '''
@@ -53,19 +126,23 @@ class ENC_payload:
 
 # TODO: Create a server client socket program.
 # Steps to receive and process the server's response
-def server_process(packet_input: dict) -> any:
+def server_process(packet_input: dict) -> bool:
     '''
     This function connect, sends and receives data from the server,
     then process the data.
 
     Args:
         ``packet_input`` (dict) : Packet to be sent to server.
+
+    Returns: 
+        ``True`` : If the signature is valid.
+        ``False`` : If the signature is invalid.
     '''
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
     connect_to_server(client)
     server_response = send_to_server(packet_input, client)
     exit_server(client)
-    process_input(server_response)
+    return process_input(server_response)
 
 def connect_to_server(client):
     '''
@@ -80,7 +157,7 @@ def connect_to_server(client):
         print("Connection Error")
         print(traceback.format_exc())
         sys.exit()
-    print(f"[CONNECTION ESTABLISHED] Connected to {HOST}:{PORT}")
+    print('\n\n' + colors.fg.green, "[CONNECTION ESTABLISHED] ", colors.fg.lightgrey, f"Connected to {HOST}:{PORT}")
 
 def send_to_server(packet: dict, client) -> dict:
     '''
@@ -120,17 +197,24 @@ def exit_server(client):
     print(f"[EXITED] Connection to {HOST}:{PORT} Exited")
 
 # Processes the server_response 
-def process_input(server_response):
+def process_input(server_response) -> bool:
     '''
     This function processes the server's response, and return the status of the file.
 
     Args:
         ``server_response`` (dict) : Server's response to client .
+
+    Returns: 
+        ``True`` : If the signature is valid.
+        ``False`` : If the signature is invalid.
     
     '''
-    if server_response == "received":
-        print("[RECEIVED] File Received by Server\n")
 
+    if server_response == colors.bg.green + colors.fg.black +  "[SERVER REPLY] Received Image" + colors.reset:
+        return True
+    
+    elif server_response == colors.bg.red + "[SERVER REPLY] Invalid Signature" + colors.reset:
+        return False
 
 
 def get_picture() -> bytes:
@@ -224,7 +308,9 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
     # Commented out as output is cluttered
 
     # Show the encypted image in bytes
-    print("\nEncrypted picture: \n", end="")
+
+    print("\n\nEncrypted picture: \n", end="")
+
     enc_image_str = ""
     for byte in AES_encrypted_image:
         enc_image_str += f"{byte:02x}"
@@ -236,9 +322,11 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
 
     # Creates a object to store encrypted session key, IV, encrypted image and RSA signature. 
     encrypted_payload = ENC_payload()
+    # Encrypts the aes_key with the server's public key
     encrypted_payload.encrypted_session_key = rsa_cipher.encrypt(aes_key)
     encrypted_payload.aes_iv = aes_cipher.iv
     encrypted_payload.encrypted_content = AES_encrypted_image
+    # Hashes the image and signs that hashed image with the camera's private key
     encrypted_payload.rsa_signature = sign_picture(picture, camera_priv_key)
     return encrypted_payload
 
@@ -255,16 +343,18 @@ def sign_picture(picture: bytes, camera_private_key):
         ``signature`` (bytes) : the signature of the picture in bytes
     '''
     # Hashes the picture using SHA256
-    digest = (SHA256.new(picture).digest())
+    # Creates a SHA256 object
+    digest = SHA256.new(picture)
 
     # Prints picture digest. digest is a byte array
     print("\n\nImage Digest:")
-    for bytes in digest:
+    for bytes in digest.digest():
         print(f"{bytes:02x}", end="")
 
     # Encrypts the digest using the private key
     signer = pkcs1_15.new(camera_private_key)
-    signature = signer.encrypt(digest)
+    signature = signer.sign(digest)
+
 
     # Prints the signature. signature is a byte array
     print("\n\nSignature:")
@@ -301,10 +391,27 @@ def main():
                 # Prepares the payload to be sent to the server
                 f_name = str(camera_id) + "_" +  datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S.jpg" )
 
-                server_process({"type": "upload_file", "file_name": f_name, "file_content": payload})
+                # Sending of file to server and awaiting reply
+                if server_process({"type": "upload_file", "file_name": f_name, "file_content": payload}):
+                    print(colors.bg.green + colors.fg.black + "[RECEIVED] File Received by Server" + colors.reset)
+                    print("Uploaded file: " + f_name)
+                
+                else: 
+                    print(colors.bg.red + "[REJECTED] File Rejected by Server" + colors.reset)
 
-                print("Uploaded file: " + f_name)
-                print(f"{empty:-^80}\n\n")
+                print(f"{empty:-^80}\n")
+
+                # Question to ask whether to continue generating new image
+                promptContinue = colors.fg.green + "[1] Continue to upload Picture" + colors.reset + colors.fg.red + "\n[0] Quit Programme" + colors.reset
+                promptContinue += '\n>>> '
+
+                userInput = validationRange(start=0,end=1,question=promptContinue)
+                if userInput == 0:
+                    print(colors.fg.red + 'Terminating programme...' + colors.reset)
+                    time.sleep(2) 
+                    print(colors.fg.green + 'Programme terminated !' + colors.reset)
+                    break
+
 
         except KeyboardInterrupt:  
             exit()  # gracefully exit if control-C detected

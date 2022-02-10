@@ -3,6 +3,7 @@ import socket
 import pickle
 import traceback
 from threading import Thread
+from turtle import color
 
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
 from Cryptodome.Signature import pkcs1_15 
@@ -18,6 +19,51 @@ key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PRIV_KEY_PATH = "depolyment\server_private.pem" # Server Private Key
 CAMERA_PUB_KEY_PATH = "depolyment\camera_public.pem"   # Camera Public Key
 
+
+# Python program to print
+# colored text and background
+class colors:
+    '''
+    Colors class:reset all colors with colors.reset; two
+    sub classes fg for foreground
+    and bg for background; use as colors.subclass.colorname.
+    i.e. colors.fg.red or colors.bg.greenalso, the generic bold, disable,
+    underline, reverse, strike through,
+    and invisible work with the main class i.e. colors.bold
+    '''
+    reset='\033[0m'
+    bold='\033[01m'
+    disable='\033[02m'
+    underline='\033[04m'
+    reverse='\033[07m'
+    strikethrough='\033[09m'
+    invisible='\033[08m'
+    class fg:
+        black='\033[30m'
+        red='\033[31m'
+        green='\033[32m'
+        orange='\033[33m'
+        blue='\033[34m'
+        purple='\033[35m'
+        cyan='\033[36m'
+        lightgrey='\033[37m'
+        darkgrey='\033[90m'
+        lightred='\033[91m'
+        lightgreen='\033[92m'
+        yellow='\033[93m'
+        lightblue='\033[94m'
+        pink='\033[95m'
+        lightcyan='\033[96m'
+    class bg:
+        black='\033[40m'
+        red='\033[41m'
+        green='\033[42m'
+        orange='\033[43m'
+        blue='\033[44m'
+        purple='\033[45m'
+        cyan='\033[46m'
+        lightgrey='\033[47m'
+ 
 # A data class to store a encrypted file content.
 class ENC_payload:
     '''
@@ -49,7 +95,7 @@ def start_server(host, port):
         ``host`` : The host IP address.
         ``port`` : The port number.
     '''
-    print("[STARTING] Server is starting...")
+    print(colors.fg.green, "[STARTING] ", colors.fg.lightgrey, "Server is starting...")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
@@ -58,12 +104,12 @@ def start_server(host, port):
         print("Bind failed. Error : " + str(sys.exc_info()))
         sys.exit()
     server.listen(20) # listening up to 20 different clients
-    print("[LISTENING] Socket now listening")
+    print(colors.fg.orange, "[LISTENING] ", colors.fg.lightgrey,"Socket now listening")
     # infinite loop- do not reset for every requests
     while True:
         connection, address = server.accept()   # Server would wait here until a new connection is received
         ip, port = str(address[0]), str(address[1])
-        print(f"[NEW CONNECTION] Connected with {ip}:{port}")
+        print(colors.fg.green,"[NEW CONNECTION] ", colors.fg.lightgrey, f"Connected with {ip}:{port}")
         try:
             # Server attempts to start a thread with target function "clientThread()"
             thread = Thread(target=client_thread, args=(connection, ip, port))
@@ -89,12 +135,12 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
         if client_input == "quit":
             # Closes the connection of current thread
             connection.close()
-            print(f"[CLOSED] Connection with {ip}:{port} closed")
+            print(colors.fg.red, "\n[CLOSED] ", colors.fg.lightgrey, f"Connection with {ip}:{port} closed")
             is_active = False
         else:
             # Send the message after dumping it and encoding it.
             connection.sendall(pickle.dumps(client_input))  
-            print(f"[PROCESS] {ip}:{port}. Sent to Client, Packet type: '{client_input}'")
+            print(colors.fg.yellow, "\n[PROCESS] ", colors.fg.lightgrey, f"{ip}:{port}. Sent to Client, Packet type: '{client_input}'")
 
 # Receives input from client machine
 def receive_input(connection, max_buffer_size):
@@ -139,15 +185,15 @@ def process_input(client_request):
 
         if verify_signature(payload, decrypted_picture, camera_public_key):
             # Writes and uploads the file onto the database, i.e. "/data" folder
-            upload_file(payload, decrypted_picture)
-            output = "received"
+            upload_file(client_request['file_name'], decrypted_picture)
+            output = colors.bg.green + colors.fg.black +  "[SERVER REPLY] Received Image" + colors.reset
+            print(colors.bg.green + colors.fg.black + f"Uploaded {client_request['file_name']} to Data Folder" + colors.reset)
+
         else:
             # This means that the signature is not valid
-            # TODO: Haven't implemented anything to tell the client that the signature is not valid
-            output = "invalid"
+            output = colors.bg.red + "[SERVER REPLY] Invalid Signature" + colors.reset
 
     return output
-
 
 # TODO: Use this certifcate to send client.py, the public key
 # The keys are RSA 2048 bit keys.
@@ -176,7 +222,7 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
 def decrypt_picture(payload, server_private_key: str) -> bytes:
     '''
     This function is used to decrypt the image sent using AES-256 and RSA-2048.
-
+    
     Args:
         ``payload`` : The payload that contains the encrypted ENC_payload object.
         ``server_private_key`` (bytes) : The private key of the server.
@@ -206,8 +252,8 @@ def decrypt_aes_key(encrypted_AES_session_key: bytes, server_private_key_content
         ``decrypted_AES_session_key`` (bytes) : The decrypted AES session key.
     '''
     server_private_key = RSA.import_key(server_private_key_content)
-    print("Done importing server private key")
-    print(f"Server private key:\n{server_private_key_content}")
+    print('\n\n' + colors.bg.green + "Done importing server private key" + colors.reset)
+    print(f"\nServer private key:\n{server_private_key_content}")
 
     # Creates the RSA object
     rsa_cipher = PKCS1_OAEP.new(server_private_key)
@@ -259,18 +305,26 @@ def verify_signature(payload, decrypted_picture: bytes, camera_public_key_conten
     for i in range(0, len(signature_str), chars_per_line):
         print(signature_str[i:i+chars_per_line])
 
-    
     # Creates the SHA256 object
     # This will used to hash the decrypted_picture to verify against the RSA encrypted signature.
-
+    digest = SHA256.new(decrypted_picture) 
 
     # Hash the decrypted picture using SHA256
-
+    print("\n\nImage Digest:")
+    for bytes in digest.digest():
+        print(f"{bytes:02x}", end="")
     
     # Compare the decrypted_picture with the decrypted signature
-
-
-    pass
+    try:
+        verifier.verify(digest,signature)
+        
+        # if signature is valid, continue and return true
+        print('\n\n' + colors.bg.green + colors.fg.black + "Signature is valid." + colors.reset + '\n')
+        return True
+    # If signature is not valid
+    except: 
+        print('\n' + colors.bg.red + "Signature is invalid." + colors.reset)
+    
 
 def upload_file(file_name, decrypted_picture):
     '''
@@ -280,8 +334,14 @@ def upload_file(file_name, decrypted_picture):
         ``file_name`` : The file name.
         ``decrypted_picture`` : The decrypted picture that contains the image.
     '''
-    # I never really thought on how to write and upload the picture.
-    pass
+    newFilePath = f'source\server\data\{file_name}'  # File path for storing of image in data folder of server
+    
+    f = open(newFilePath,'x')     # Create a new file
+
+    with open(newFilePath,'wb') as fn:  # Writing to new .jpg file the decrypted image
+        fn.write(decrypted_picture)
+
+
 
 if __name__ == "__main__":
     start_server(HOST, PORT)
