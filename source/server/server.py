@@ -3,6 +3,7 @@ import socket
 import pickle
 import traceback
 from threading import Thread
+from turtle import color
 
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
 from Cryptodome.Signature import pkcs1_15 
@@ -133,12 +134,12 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
         if client_input == "quit":
             # Closes the connection of current thread
             connection.close()
-            print(colors.fg.red, "[CLOSED] ", colors.fg.lightgrey, f"Connection with {ip}:{port} closed")
+            print(colors.fg.red, "\n[CLOSED] ", colors.fg.lightgrey, f"Connection with {ip}:{port} closed")
             is_active = False
         else:
             # Send the message after dumping it and encoding it.
             connection.sendall(pickle.dumps(client_input))  
-            print(colors.fg.yellow, "[PROCESS] ", colors.fg.lightgrey, f"{ip}:{port}. Sent to Client, Packet type: '{client_input}'")
+            print(colors.fg.yellow, "\n[PROCESS] ", colors.fg.lightgrey, f"{ip}:{port}. Sent to Client, Packet type: '{client_input}'")
 
 # Receives input from client machine
 def receive_input(connection, max_buffer_size):
@@ -183,12 +184,14 @@ def process_input(client_request):
 
         if verify_signature(payload, decrypted_picture, camera_public_key):
             # Writes and uploads the file onto the database, i.e. "/data" folder
-            upload_file(payload, decrypted_picture)
-            output = "received"
+            upload_file(client_request['file_name'], decrypted_picture)
+            output = colors.bg.green + colors.fg.black +  "[SERVER REPLY] Received Image" + colors.reset
+            print(colors.bg.green + colors.fg.black + f"Uploaded {client_request['file_name']} to Data Folder" + colors.reset)
+
         else:
             # This means that the signature is not valid
-            # TODO: Haven't implemented anything to tell the client that the signature is not valid
-            output = "invalid"
+            output = colors.bg.red + "[SERVER REPLY] Invalid Signature" + colors.reset
+
     return output
 
 # TODO: Use this certifcate to send client.py, the public key
@@ -248,8 +251,8 @@ def decrypt_aes_key(encrypted_AES_session_key: bytes, server_private_key_content
         ``decrypted_AES_session_key`` (bytes) : The decrypted AES session key.
     '''
     server_private_key = RSA.import_key(server_private_key_content)
-    print("Done importing server private key")
-    print(f"Server private key:\n{server_private_key_content}")
+    print('\n\n' + colors.bg.green + "Done importing server private key" + colors.reset)
+    print(f"\nServer private key:\n{server_private_key_content}")
 
     # Creates the RSA object
     rsa_cipher = PKCS1_OAEP.new(server_private_key)
@@ -301,18 +304,26 @@ def verify_signature(payload, decrypted_picture: bytes, camera_public_key_conten
     for i in range(0, len(signature_str), chars_per_line):
         print(signature_str[i:i+chars_per_line])
 
-    
     # Creates the SHA256 object
     # This will used to hash the decrypted_picture to verify against the RSA encrypted signature.
-
+    digest = SHA256.new(decrypted_picture) 
 
     # Hash the decrypted picture using SHA256
-
+    print("\n\nImage Digest:")
+    for bytes in digest.digest():
+        print(f"{bytes:02x}", end="")
     
     # Compare the decrypted_picture with the decrypted signature
-
-
-    pass
+    try:
+        verifier.verify(digest,signature)
+        
+        # if signature is valid, continue and return true
+        print('\n\n' + colors.bg.green + colors.fg.black + "Signature is valid." + colors.reset + '\n')
+        return True
+    # If signature is not valid
+    except: 
+        print('\n' + colors.bg.red + "Signature is invalid." + colors.reset)
+    
 
 def upload_file(file_name, decrypted_picture):
     '''
@@ -322,8 +333,13 @@ def upload_file(file_name, decrypted_picture):
         ``file_name`` : The file name.
         ``decrypted_picture`` : The decrypted picture that contains the image.
     '''
-    # I never really thought on how to write and upload the picture.
-    pass
+    newFilePath = f'source\server\data\{file_name}'  # File path for storing of image in data folder of server
+    
+    f = open(newFilePath,'x')     # Create a new file
+
+    with open(newFilePath,'wb') as fn:  # Writing to new .jpg file the decrypted image
+        fn.write(decrypted_picture)
+
 
 if __name__ == "__main__":
     start_server(HOST, PORT)
