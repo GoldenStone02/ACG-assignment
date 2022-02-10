@@ -58,6 +58,7 @@ key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
 CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
 
+
 # Python program to print
 # colored text and background
 class colors:
@@ -208,12 +209,12 @@ def process_input(server_response) -> bool:
         ``False`` : If the signature is invalid.
     
     '''
+
     if server_response == colors.bg.green + colors.fg.black +  "[SERVER REPLY] Received Image" + colors.reset:
         return True
     
     elif server_response == colors.bg.red + "[SERVER REPLY] Invalid Signature" + colors.reset:
         return False
-
 
 
 def get_picture() -> bytes:
@@ -307,7 +308,9 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
     # Commented out as output is cluttered
 
     # Show the encypted image in bytes
+
     print("\n\nEncrypted picture: \n", end="")
+
     enc_image_str = ""
     for byte in AES_encrypted_image:
         enc_image_str += f"{byte:02x}"
@@ -351,6 +354,7 @@ def sign_picture(picture: bytes, camera_private_key):
     # Encrypts the digest using the private key
     signer = pkcs1_15.new(camera_private_key)
     signature = signer.sign(digest)
+
 
     # Prints the signature. signature is a byte array
     print("\n\nSignature:")
@@ -407,6 +411,7 @@ def main():
                     time.sleep(2) 
                     print(colors.fg.green + 'Programme terminated !' + colors.reset)
                     break
+
 
         except KeyboardInterrupt:  
             exit()  # gracefully exit if control-C detected

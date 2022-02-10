@@ -85,6 +85,7 @@ class ENC_payload:
         self.encrypted_content=""
         self.rsa_signature=""
 
+
 # Starts the server
 def start_server(host, port):
     '''
@@ -221,7 +222,7 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
 def decrypt_picture(payload, server_private_key: str) -> bytes:
     '''
     This function is used to decrypt the image sent using AES-256 and RSA-2048.
-
+    
     Args:
         ``payload`` : The payload that contains the encrypted ENC_payload object.
         ``server_private_key`` (bytes) : The private key of the server.
@@ -339,6 +340,7 @@ def upload_file(file_name, decrypted_picture):
 
     with open(newFilePath,'wb') as fn:  # Writing to new .jpg file the decrypted image
         fn.write(decrypted_picture)
+
 
 
 if __name__ == "__main__":
