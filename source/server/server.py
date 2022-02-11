@@ -3,7 +3,6 @@ import socket
 import pickle
 import traceback
 from threading import Thread
-from turtle import color
 
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
 from Cryptodome.Signature import pkcs1_15 
@@ -24,7 +23,7 @@ BLOCK_SIZE = 32 # AES data block size, 256 bits (32 bytes)
 key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PRIV_KEY_PATH = "depolyment\server_private.pem" # Server Private Key
 CAMERA_PUB_KEY_PATH = "depolyment\camera_public.pem"   # Camera Public Key
-SERVER_CERT_PATH = "depolyment\cert.crt" # Server certificate
+SERVER_CERT_PATH = "depolyment\server_cert.cert" # Server certificate
 
 
 # Python program to print
@@ -231,8 +230,9 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
     
     # public key
     public_key = cert.public_key()
-
-    return public_key, private_key
+    strPublicKey = str(public_key.public_numbers().n)
+    print(strPublicKey)
+    return strPublicKey, private_key
 
 # Decryption the image sent using AES and RSA
 def decrypt_picture(payload, server_private_key: str) -> bytes:

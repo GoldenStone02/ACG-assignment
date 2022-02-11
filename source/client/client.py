@@ -4,6 +4,7 @@ import sys
 import pickle
 import socket
 import traceback
+import base64
 
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
 from Cryptodome.Signature import pkcs1_15 
@@ -261,12 +262,12 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
     
     cert=x509.load_der_x509_certificate(st_cert,default_backend())
 
-    print("Version: {0}".format(str(cert.version)))
-    print("Serial No: {0:x}".format(cert.serial_number))
+    print("\nCertificate Version: {0}".format(str(cert.version)))
+    print("Certificate Serial No: {0:x}".format(cert.serial_number))
     
-    # public key
+    # public key obtained from server certificate
     public_key = cert.public_key()
-
+   
     return public_key, private_key
 
 # AES and RSA encryption onto the picture before sending.
