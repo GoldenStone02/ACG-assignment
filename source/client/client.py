@@ -49,6 +49,7 @@ my_pict = "iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAADAFBMVEWOjo6JiYmxsbGFh
 
 # TODO: Encrypt the camera id with server RSA public key
 camera_id = 102   # This ID is unique for each camera installed, should it be in the code?
+
 server_name = "localhost" #  server name or IP address
 
 HOST = "127.0.0.1"
@@ -289,7 +290,7 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
 
     # Generates a random AES key
     print(f"\nGenerating a {key_size*8}-bit AES key..")
-    aes_key = get_random_bytes(key_size)
+    aes_key = get_random_bytes(key_size) # 256 bit for AES
     print("AES block size: ", key_size)
     print("AES key: \n", end="")
 
@@ -411,7 +412,6 @@ def main():
                     time.sleep(2) 
                     print(colors.fg.green + 'Programme terminated !' + colors.reset)
                     break
-
 
         except KeyboardInterrupt:  
             exit()  # gracefully exit if control-C detected
