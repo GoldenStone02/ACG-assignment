@@ -12,6 +12,11 @@ from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import SHA256
 from Cryptodome.Random import get_random_bytes
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509 import oid
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec
 
 def validationRange(start,end,question) -> int: 
     '''
@@ -57,7 +62,7 @@ BLOCK_SIZE = 32 # AES data block size, 256 bits (32 bytes)
 key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
 CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
-
+SERVER_CERT_PATH = "depolyment\server_cert.cert" # Server certificate
 
 # Python program to print
 # colored text and background
@@ -246,11 +251,21 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
     Returns:
         ``public_key``, ``private_key`` (str) : both the public and private key content as str.
     '''
-    with open(public_key_filepath, 'r') as f:
-        public_key = f.read()
-    
+    # with open(public_key_filepath, 'r') as f:
+    #     public_key = f.read()  # Server Public Key
+
     with open(private_key_filepath, 'r') as f:
-        private_key = f.read()
+        private_key = f.read() # Camera Private Key
+
+    st_cert = open(SERVER_CERT_PATH,"rb").read()
+    
+    cert=x509.load_der_x509_certificate(st_cert,default_backend())
+
+    print("Version: {0}".format(str(cert.version)))
+    print("Serial No: {0:x}".format(cert.serial_number))
+    
+    # public key
+    public_key = cert.public_key()
 
     return public_key, private_key
 
