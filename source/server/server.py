@@ -3,7 +3,6 @@ import socket
 import pickle
 import traceback
 from threading import Thread
-from turtle import color
 
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
 from Cryptodome.Signature import pkcs1_15 
@@ -195,7 +194,6 @@ def process_input(client_request):
 
     return output
 
-# TODO: Use this certifcate to send client.py, the public key
 # The keys are RSA 2048 bit keys.
 # Use this certifcate to send client.py, the public key
 def get_key(public_key_filepath: str, private_key_filepath: str):
@@ -214,7 +212,7 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
         public_key = f.read()
     
     with open(private_key_filepath, 'r') as f:
-        private_key = f.read()
+        private_key = f.read() # Camera Private Key
 
     return public_key, private_key
 
@@ -252,7 +250,7 @@ def decrypt_aes_key(encrypted_AES_session_key: bytes, server_private_key_content
         ``decrypted_AES_session_key`` (bytes) : The decrypted AES session key.
     '''
     server_private_key = RSA.import_key(server_private_key_content)
-    print('\n\n' + colors.bg.green + "Done importing server private key" + colors.reset)
+    print('\n\n' + colors.bg.green + colors.fg.black + "Done importing server private key" + colors.reset)
     print(f"\nServer private key:\n{server_private_key_content}")
 
     # Creates the RSA object

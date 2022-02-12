@@ -4,6 +4,7 @@ import sys
 import pickle
 import socket
 import traceback
+import base64
 
 from Cryptodome.Cipher import PKCS1_OAEP, AES  # need to pip install pycryptodome
 from Cryptodome.Signature import pkcs1_15 
@@ -48,6 +49,7 @@ my_pict = "iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAADAFBMVEWOjo6JiYmxsbGFh
 
 # TODO: Encrypt the camera id with server RSA public key
 camera_id = 102   # This ID is unique for each camera installed, should it be in the code?
+
 server_name = "localhost" #  server name or IP address
 
 HOST = "127.0.0.1"
@@ -57,7 +59,6 @@ BLOCK_SIZE = 32 # AES data block size, 256 bits (32 bytes)
 key_size = 32   # AES key size, 32 bytes -> 256 bits
 SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
 CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
-
 
 # Python program to print
 # colored text and background
@@ -247,10 +248,10 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
         ``public_key``, ``private_key`` (str) : both the public and private key content as str.
     '''
     with open(public_key_filepath, 'r') as f:
-        public_key = f.read()
-    
+        public_key = f.read()  # Server Public Key
+
     with open(private_key_filepath, 'r') as f:
-        private_key = f.read()
+        private_key = f.read() # Camera Private Key
 
     return public_key, private_key
 
@@ -289,7 +290,7 @@ def encrypt_picture(picture: bytes, server_public_key_content, camera_private_ke
 
     # Generates a random AES key
     print(f"\nGenerating a {key_size*8}-bit AES key..")
-    aes_key = get_random_bytes(key_size)
+    aes_key = get_random_bytes(key_size) # 256 bit for AES
     print("AES block size: ", key_size)
     print("AES key: \n", end="")
 
@@ -411,7 +412,6 @@ def main():
                     time.sleep(2) 
                     print(colors.fg.green + 'Programme terminated !' + colors.reset)
                     break
-
 
         except KeyboardInterrupt:  
             exit()  # gracefully exit if control-C detected
