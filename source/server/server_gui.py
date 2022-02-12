@@ -67,7 +67,7 @@ class GUI:
         # NOTE: plaintext password --> 1Qwer$#@!
         self.password = "cf1274bedc756b5335653619ecd82fc16171ccecf5e687c7aeafae41e750d768"
         # Group 1: Camera ID, Group 2: Date, Group 3: Time
-        self.PATTERN = r"(\d{2,3})_(\d{4}_\d{2}_\d{2})_(\d{2}_\d{2}_\d{2}).jpg"
+        self.PATTERN = r"(\d{1,5})_(\d{4}_\d{2}_\d{2})_(\d{2}_\d{2}_\d{2}).jpg"
 
     def run(self):
         '''
@@ -206,7 +206,7 @@ class ImageManager:
         self.files = []
         self.camera_ids = []
         # Group 1: Camera ID, Group 2: Date, Group 3: Time
-        self.PATTERN = r"(\d{2,3})_(\d{4}_\d{2}_\d{2})_(\d{2}_\d{2}_\d{2}).jpg"
+        self.PATTERN = r"(\d{1,5})_(\d{4}_\d{2}_\d{2})_(\d{2}_\d{2}_\d{2}).jpg"
         self.data_filepath = "source/server/data"
 
     def get_files(self):
