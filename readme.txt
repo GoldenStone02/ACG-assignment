@@ -5,10 +5,10 @@
 
 
 # To Run
-1) Open a new terminal window and change directory into ~/Desktop/ACG/source/server/
+1) Open a new terminal window and change directory into ~/Desktop/ACG/
 2) Run the command [python -m server.py] to start the server.
 
-3) Open another new terminal window and change directory into ~/Desktop/ACG/source/client/
+3) Open another new terminal window and change directory into ~/Desktop/ACG/
 4) Run the command [python -m client.py] to start the client.
 
 5) You will notice the directory ~/Desktop/ACG/source/server/data/ will have increasing number of pictures.

@@ -63,8 +63,9 @@ class GUI:
         Initialize the instance of the GUI class
         '''
         self.empty = ""
-        # Manages only the password
-        self.password = "1Qwer$#@!"
+        # Manages only the password, 
+        # NOTE: plaintext password --> 1Qwer$#@!
+        self.password = "cf1274bedc756b5335653619ecd82fc16171ccecf5e687c7aeafae41e750d768"
         # Group 1: Camera ID, Group 2: Date, Group 3: Time
         self.PATTERN = r"(\d{2,3})_(\d{4}_\d{2}_\d{2})_(\d{2}_\d{2}_\d{2}).jpg"
 
@@ -79,7 +80,6 @@ class GUI:
                 print(colors.fg.red, "\nTerminating Programme...", colors.fg.lightgrey)
             if login_status:    # If login was successful
                 self.menu()
-
             elif login_status == False:
                 break 
 
@@ -165,7 +165,6 @@ class GUI:
             user_input = self.validate_range(camera_ids, page=menu)
             if user_input == 0:
                 break
-            print("test")
             self.view_camera_data(camera_ids[user_input - 1], img_manager)
             
     def validate_password(self, user_input):
@@ -175,7 +174,8 @@ class GUI:
         Parameters:
             user_input: The user's input
         '''
-        if user_input == self.password:
+        hashed_user_input = SHA256.new(user_input.encode('utf-8')).hexdigest()
+        if hashed_user_input == self.password:
             return True
         else:
             return False

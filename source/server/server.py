@@ -194,7 +194,6 @@ def process_input(client_request):
 
     return output
 
-# TODO: Use this certifcate to send client.py, the public key
 # The keys are RSA 2048 bit keys.
 # Use this certifcate to send client.py, the public key
 def get_key(public_key_filepath: str, private_key_filepath: str):
@@ -251,7 +250,7 @@ def decrypt_aes_key(encrypted_AES_session_key: bytes, server_private_key_content
         ``decrypted_AES_session_key`` (bytes) : The decrypted AES session key.
     '''
     server_private_key = RSA.import_key(server_private_key_content)
-    print('\n\n' + colors.bg.green + "Done importing server private key" + colors.reset)
+    print('\n\n' + colors.bg.green + colors.fg.black + "Done importing server private key" + colors.reset)
     print(f"\nServer private key:\n{server_private_key_content}")
 
     # Creates the RSA object
