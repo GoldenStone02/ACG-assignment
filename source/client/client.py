@@ -50,7 +50,6 @@ my_pict = "iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAADAFBMVEWOjo6JiYmxsbGFh
 
 # System  variable of main program
 
-# TODO: Encrypt the camera id with server RSA public key
 camera_id = 102   # This ID is unique for each camera installed, should it be in the code?
 
 server_name = "localhost" #  server name or IP address
