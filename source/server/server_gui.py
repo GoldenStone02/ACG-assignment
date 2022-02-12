@@ -80,6 +80,9 @@ class GUI:
             if login_status:    # If login was successful
                 self.menu()
 
+            elif login_status == False:
+                break 
+
     def login(self):
         '''
         This method is used to login to the server.
