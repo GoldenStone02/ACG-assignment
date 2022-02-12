@@ -13,6 +13,9 @@ from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import SHA256
 from Cryptodome.Random import get_random_bytes
 
+from cryptography.x509 import load_pem_x509_certificate
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 def validationRange(start,end,question) -> int: 
     '''
@@ -57,8 +60,9 @@ PORT = 2121
 
 BLOCK_SIZE = 32 # AES data block size, 256 bits (32 bytes)
 key_size = 32   # AES key size, 32 bytes -> 256 bits
-SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
-CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.pem"   # Camera Private Key
+#SERVER_PUB_KEY_PATH = "depolyment\server_public.pem" # Server Public Key
+CAMERA_PRIV_KEY_PATH = "depolyment\camera_private.key"   # Camera Private Key
+SERVER_CERT_PUB_KEY_PATH = "depolyment\server_public_cert.cert"
 
 # Python program to print
 # colored text and background
@@ -125,7 +129,6 @@ class ENC_payload:
         self.encrypted_content=""
         self.rsa_signature=""
 
-# TODO: Create a server client socket program.
 # Steps to receive and process the server's response
 def server_process(packet_input: dict) -> bool:
     '''
@@ -247,12 +250,17 @@ def get_key(public_key_filepath: str, private_key_filepath: str):
     Returns:
         ``public_key``, ``private_key`` (str) : both the public and private key content as str.
     '''
-    with open(public_key_filepath, 'r') as f:
-        public_key = f.read()  # Server Public Key
+    with open(public_key_filepath, 'rb') as f:
+        cert = f.read()  # Server Public Key
+
+    # loading of server public key from server certificate
+    cert_object = load_pem_x509_certificate(cert, default_backend)
+    public_key = cert_object.public_key().public_bytes(encoding=serialization.Encoding.PEM,format=serialization.PublicFormat.SubjectPublicKeyInfo)
 
     with open(private_key_filepath, 'r') as f:
         private_key = f.read() # Camera Private Key
 
+    
     return public_key, private_key
 
 # AES and RSA encryption onto the picture before sending.
@@ -376,14 +384,14 @@ def main():
     """
     empty = ""
     # Gets the necessary keys from the files
-    server_public_key, camera_private_key = get_key(SERVER_PUB_KEY_PATH, CAMERA_PRIV_KEY_PATH)
+    server_public_key, camera_private_key = get_key(SERVER_CERT_PUB_KEY_PATH, CAMERA_PRIV_KEY_PATH)
 
     while True:
         try:  
             my_image = get_picture()  # Get picture
             if len(my_image) == 0:
                 time.sleep(10) # Sleep for 10 sec if there is no image
-                print( "Random no motion detected")
+                print("Random no motion detected")
             else:
                 print(f"Processes\n{empty:-^80}\n")
                 # Encrypts the picture
